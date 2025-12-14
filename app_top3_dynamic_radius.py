@@ -127,29 +127,47 @@ app = dash.Dash(__name__)
 
 app.layout = html.Div(
     [
-        html.H2("Texas Elementary Schools", style={"textAlign": "center", "margin": "20px"}),
+        html.H2("Texas Elementary Schools", style={"textAlign": "center", "margin": "20px", "fontFamily": "Arial"}),
 
-        # Dropdown
+        # Control Panel (View Selector + Map Style Selector)
         html.Div(
             [
-                dcc.Dropdown(
-                    id="view-selector",
-                    options=[
-                        {"label": "All Cities (by school count)", "value": "all"},
-                        {"label": "Top 3 Schools per City", "value": "top3"},
-                    ],
-                    value="all",
-                    style={"width": "400px", "margin": "0 auto"},
-                )
+                # Left: View Mode
+                html.Div([
+                    html.Label("Data View:", style={"fontWeight": "bold"}),
+                    dcc.Dropdown(
+                        id="view-selector",
+                        options=[
+                            {"label": "Overview (Bubble Map)", "value": "all"},
+                            {"label": "Detailed (Top 3 Schools)", "value": "top3"},
+                        ],
+                        value="all",
+                        clearable=False
+                    )
+                ], style={"width": "300px", "marginRight": "20px"}),
+
+                # Right: Map Background Style
+                html.Div([
+                    html.Label("Map Background:", style={"fontWeight": "bold"}),
+                    dcc.Dropdown(
+                        id="map-style-selector",
+                        options=[{"label": k, "value": k} for k in MAP_STYLES.keys()],
+                        value="Carto Voyager", # Default value
+                        clearable=False
+                    )
+                ], style={"width": "300px"})
             ],
-            style={"textAlign": "center", "marginBottom": "20px"},
+            style={"display": "flex", "justifyContent": "center", "marginBottom": "20px"}
         ),
 
-        # 地图容器（position relative，给图例 absolute 定位用）
-        html.Div(id="map-container", style={"position": "relative", "height": "700px"}),
-
-        # 图例容器
-        html.Div(id="legend-container"),
+        # Map Container
+        html.Div(
+            [
+                html.Div(id="map-container", style={"height": "100%", "width": "100%"}),
+                html.Div(id="legend-container"),
+            ],
+            style={"position": "relative", "height": "700px", "border": "1px solid #ddd"}
+        ),
     ]
 )
 
@@ -160,8 +178,9 @@ app.layout = html.Div(
     Output("map-container", "children"),
     Output("legend-container", "children"),
     Input("view-selector", "value"),
+    Input("map-style-selector", "value"),
 )
-def update_map(view_mode):
+def update_map(view_mode, map_style_name):
     # Get the URL based on the dropdown selection 
     tile_url = MAP_STYLES.get(map_style_name, MAP_STYLES["Carto Light"])
     if view_mode == "all":
