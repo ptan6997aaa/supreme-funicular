@@ -4,6 +4,21 @@ from dash import html, dcc, callback, Input, Output
 import dash_leaflet as dl
 from colour import Color
 
+# Map Style Definitions 
+# https://leaflet-extras.github.io/leaflet-providers/preview/ 
+MAP_STYLES = {
+    "Uses standard OpenStreetMap": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    "Carto Light": "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+    "Carto Dark": "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    "Carto Voyager": "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    "Esri Gray Canvas": "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    "OSM HOT": "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
+    "Esri NatGeo": "https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}",
+    "Esri Satellite": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    "Esri National Geographic": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}.png",
+    "OpenTopoMap Topography": "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
+}
+
 # ----------------------------
 # 1. 数据加载与预处理
 # ----------------------------
@@ -147,6 +162,8 @@ app.layout = html.Div(
     Input("view-selector", "value"),
 )
 def update_map(view_mode):
+    # Get the URL based on the dropdown selection 
+    tile_url = MAP_STYLES.get(map_style_name, MAP_STYLES["Carto Light"])
     if view_mode == "all":
         if merged_all.empty:
             return html.Div("No data to display."), ""
@@ -192,25 +209,7 @@ def update_map(view_mode):
             )
 
         map_obj = dl.Map(
-            # # Uses standard OpenStreetMap (Colorful)
-            # [dl.TileLayer(), *markers] 
-            # [dl.TileLayer(url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"), *markers]
-            
-            # # CartoDB Dark 
-            # [dl.TileLayer(url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"), *markers] 
-            
-            # # CartoDB Light 
-            # [dl.TileLayer(url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"), *markers]
-            
-            # # Satellite 
-            # [dl.TileLayer(url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.png"), *markers]  
-
-            # # National Geographic 
-            # [dl.TileLayer(url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}.png"), *markers]
-            
-            [dl.TileLayer(url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"), *markers],
-             
-
+            [dl.TileLayer(url=tile_url), *markers],
             center=[31.9686, -99.9018],
             zoom=6,
             style={"width": "100%", "height": "100%"},
@@ -273,10 +272,7 @@ def update_map(view_mode):
         )
 
     map_obj = dl.Map(
-        # # Uses standard OpenStreetMap (Colorful)
-        # [dl.TileLayer(), *markers],
-        # Uses CartoDB Positron (White/Grey/Clean)
-        [dl.TileLayer(url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"), *markers],
+        [dl.TileLayer(url=tile_url), *markers],
         center=[31.9686, -99.9018],
         zoom=6,
         style={"width": "100%", "height": "100%"},
