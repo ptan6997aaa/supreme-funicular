@@ -302,4 +302,4 @@ def update_map(view_mode, map_style_name):
 # 6. 运行
 # ----------------------------
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run(debug=True)
