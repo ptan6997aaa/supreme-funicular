@@ -3,7 +3,6 @@ plotly[express]
 pandas
 dash-leaflet
 colour
-test
 
 
 
