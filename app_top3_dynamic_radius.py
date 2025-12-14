@@ -193,9 +193,24 @@ def update_map(view_mode):
 
         map_obj = dl.Map(
             # # Uses standard OpenStreetMap (Colorful)
-            # [dl.TileLayer(), *markers],
-            # Uses CartoDB Positron (White/Grey/Clean)
+            # [dl.TileLayer(), *markers] 
+            # [dl.TileLayer(url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"), *markers]
+            
+            # # CartoDB Dark 
+            # [dl.TileLayer(url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"), *markers] 
+            
+            # # CartoDB Light 
+            # [dl.TileLayer(url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"), *markers]
+            
+            # # Satellite 
+            # [dl.TileLayer(url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.png"), *markers]  
+
+            # # National Geographic 
+            # [dl.TileLayer(url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}.png"), *markers]
+            
             [dl.TileLayer(url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"), *markers],
+             
+
             center=[31.9686, -99.9018],
             zoom=6,
             style={"width": "100%", "height": "100%"},
