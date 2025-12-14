@@ -4,6 +4,21 @@ from dash import html, dcc, callback, Input, Output
 import dash_leaflet as dl
 from colour import Color
 
+# Map Style Definitions 
+# https://leaflet-extras.github.io/leaflet-providers/preview/ 
+MAP_STYLES = {
+    "Uses standard OpenStreetMap": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    "Carto Light": "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+    "Carto Dark": "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    "Carto Voyager": "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    "Esri Gray Canvas": "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    "OSM HOT": "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
+    "Esri NatGeo": "https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}",
+    "Esri Satellite": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    "Esri National Geographic": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}.png",
+    "OpenTopoMap Topography": "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
+}
+
 # ----------------------------
 # 1. 数据加载与预处理
 # ----------------------------
@@ -112,29 +127,47 @@ app = dash.Dash(__name__)
 
 app.layout = html.Div(
     [
-        html.H2("Texas Elementary Schools", style={"textAlign": "center", "margin": "20px"}),
+        html.H2("Texas Elementary Schools", style={"textAlign": "center", "margin": "20px", "fontFamily": "Arial"}),
 
-        # Dropdown
+        # Control Panel (View Selector + Map Style Selector)
         html.Div(
             [
-                dcc.Dropdown(
-                    id="view-selector",
-                    options=[
-                        {"label": "All Cities (by school count)", "value": "all"},
-                        {"label": "Top 3 Schools per City", "value": "top3"},
-                    ],
-                    value="all",
-                    style={"width": "400px", "margin": "0 auto"},
-                )
+                # Left: View Mode
+                html.Div([
+                    html.Label("Data View:", style={"fontWeight": "bold"}),
+                    dcc.Dropdown(
+                        id="view-selector",
+                        options=[
+                            {"label": "Overview (Bubble Map)", "value": "all"},
+                            {"label": "Detailed (Top 3 Schools)", "value": "top3"},
+                        ],
+                        value="all",
+                        clearable=False
+                    )
+                ], style={"width": "300px", "marginRight": "20px"}),
+
+                # Right: Map Background Style
+                html.Div([
+                    html.Label("Map Background:", style={"fontWeight": "bold"}),
+                    dcc.Dropdown(
+                        id="map-style-selector",
+                        options=[{"label": k, "value": k} for k in MAP_STYLES.keys()],
+                        value="Carto Voyager", # Default value
+                        clearable=False
+                    )
+                ], style={"width": "300px"})
             ],
-            style={"textAlign": "center", "marginBottom": "20px"},
+            style={"display": "flex", "justifyContent": "center", "marginBottom": "20px"}
         ),
 
-        # 地图容器（position relative，给图例 absolute 定位用）
-        html.Div(id="map-container", style={"position": "relative", "height": "700px"}),
-
-        # 图例容器
-        html.Div(id="legend-container"),
+        # Map Container
+        html.Div(
+            [
+                html.Div(id="map-container", style={"height": "100%", "width": "100%"}),
+                html.Div(id="legend-container"),
+            ],
+            style={"position": "relative", "height": "700px", "border": "1px solid #ddd"}
+        ),
     ]
 )
 
@@ -145,8 +178,11 @@ app.layout = html.Div(
     Output("map-container", "children"),
     Output("legend-container", "children"),
     Input("view-selector", "value"),
+    Input("map-style-selector", "value"),
 )
-def update_map(view_mode):
+def update_map(view_mode, map_style_name):
+    # Get the URL based on the dropdown selection 
+    tile_url = MAP_STYLES.get(map_style_name, MAP_STYLES["Carto Light"])
     if view_mode == "all":
         if merged_all.empty:
             return html.Div("No data to display."), ""
@@ -192,10 +228,7 @@ def update_map(view_mode):
             )
 
         map_obj = dl.Map(
-            # # Uses standard OpenStreetMap (Colorful)
-            # [dl.TileLayer(), *markers],
-            # Uses CartoDB Positron (White/Grey/Clean)
-            [dl.TileLayer(url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"), *markers],
+            [dl.TileLayer(url=tile_url), *markers],
             center=[31.9686, -99.9018],
             zoom=6,
             style={"width": "100%", "height": "100%"},
@@ -258,10 +291,7 @@ def update_map(view_mode):
         )
 
     map_obj = dl.Map(
-        # # Uses standard OpenStreetMap (Colorful)
-        # [dl.TileLayer(), *markers],
-        # Uses CartoDB Positron (White/Grey/Clean)
-        [dl.TileLayer(url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"), *markers],
+        [dl.TileLayer(url=tile_url), *markers],
         center=[31.9686, -99.9018],
         zoom=6,
         style={"width": "100%", "height": "100%"},
