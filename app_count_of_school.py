@@ -8,16 +8,19 @@ from colour import Color
 # 1. 读取数据
 # ----------------------------
 df_schools = pd.read_csv("schools.csv")
-# 移除 description 中包含 "private" 的行（不区分大小写 
+# 移除 description 中包含 "private" 的行（不区分大小写
 df_schools = df_schools[
     ~df_schools["description"].str.contains("private", case=False, na=False)
 ]
-df_schools["city"] = df_schools["city_state"].str.replace(r",\s*TX$", "", regex=True)
-school_counts = df_schools.groupby("city").size().reset_index(name="school_count")
+df_schools["city"] = df_schools["city_state"].str.replace(
+    r",\s*TX$", "", regex=True)
+school_counts = df_schools.groupby(
+    "city").size().reset_index(name="school_count")
 
 # 从 https://simplemaps.com/data/us-cities 下载 uscities.csv
 df_cities = pd.read_csv("uscities.csv")
-tx_cities = df_cities[df_cities["state_id"] == "TX"][["city", "lat", "lng"]].copy()
+tx_cities = df_cities[df_cities["state_id"]
+                      == "TX"][["city", "lat", "lng"]].copy()
 tx_cities["city"] = tx_cities["city"].str.title()
 
 merged = school_counts.merge(tx_cities, on="city", how="inner")
@@ -27,6 +30,7 @@ merged = school_counts.merge(tx_cities, on="city", how="inner")
 # ----------------------------
 min_count = merged["school_count"].min()
 max_count = merged["school_count"].max()
+
 
 def get_color(value, min_val, max_val):
     if min_val == max_val:
@@ -39,7 +43,9 @@ def get_color(value, min_val, max_val):
     selected_color = color_range[int(ratio * 99)]
     return selected_color.hex
 
-merged["color"] = merged["school_count"].apply(lambda x: get_color(x, min_count, max_count))
+
+merged["color"] = merged["school_count"].apply(
+    lambda x: get_color(x, min_count, max_count))
 
 # ----------------------------
 # 3. 创建统一大小的 CircleMarker
@@ -52,15 +58,18 @@ for _, row in merged.iterrows():
             radius=8,  # ✅ 所有圆圈大小相同
             color="black",          # 边框颜色
             weight=1,               # 边框粗细
-            fillColor=row["color"], # 填充色 = 数量编码
+            fillColor=row["color"],  # 填充色 = 数量编码
             fillOpacity=0.8,
-            children=dl.Tooltip(f"{row['city']}: {row['school_count']} school(s)")
+            children=dl.Tooltip(
+                f"{row['city']}: {row['school_count']} school(s)")
         )
     )
 
 # ----------------------------
 # 4. 图例（保持不变）
 # ----------------------------
+
+
 def make_legend(min_val, max_val):
     steps = 5
     if min_val == max_val:
@@ -84,7 +93,8 @@ def make_legend(min_val, max_val):
             ], style={"marginBottom": "5px"})
         )
     return html.Div([
-        html.H5("School Count", style={"fontWeight": "bold", "marginBottom": "8px"}),
+        html.H5("School Count", style={
+                "fontWeight": "bold", "marginBottom": "8px"}),
         html.Div(legend_items)
     ], style={
         "position": "absolute",
@@ -97,13 +107,15 @@ def make_legend(min_val, max_val):
         "zIndex": 1000
     })
 
+
 # ----------------------------
 # 5. Dash App
 # ----------------------------
 app = dash.Dash(__name__)
 
 app.layout = html.Div([
-    html.H2("Texas Elementary Schools by City", style={"textAlign": "center", "margin": "20px"}),
+    html.H2("Texas Elementary Schools by City", style={
+            "textAlign": "center", "margin": "20px"}),
     dl.Map(
         [
             dl.TileLayer(),  # OpenStreetMap
@@ -117,4 +129,4 @@ app.layout = html.Div([
 ])
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run(debug=True)

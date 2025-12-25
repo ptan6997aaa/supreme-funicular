@@ -4,8 +4,8 @@ from dash import html, dcc, callback, Input, Output
 import dash_leaflet as dl
 from colour import Color
 
-# Map Style Definitions 
-# https://leaflet-extras.github.io/leaflet-providers/preview/ 
+# Map Style Definitions
+# https://leaflet-extras.github.io/leaflet-providers/preview/
 MAP_STYLES = {
     "Uses standard OpenStreetMap": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     "Carto Light": "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
@@ -31,13 +31,15 @@ df_schools = df_schools[
 ]
 
 # 提取城市名（移除 ", TX"）
-df_schools["city"] = df_schools["city_state"].str.replace(r",\s*TX$", "", regex=True)
+df_schools["city"] = df_schools["city_state"].str.replace(
+    r",\s*TX$", "", regex=True)
 
 # 移除排名缺失的行（确保排名有效）
 df_schools = df_schools.dropna(subset=["rank_state_elementary"])
 
 # 确保排名列为数值
-df_schools["rank_state_elementary"] = pd.to_numeric(df_schools["rank_state_elementary"], errors="coerce")
+df_schools["rank_state_elementary"] = pd.to_numeric(
+    df_schools["rank_state_elementary"], errors="coerce")
 df_schools = df_schools.dropna(subset=["rank_state_elementary"])
 
 # 计算城市内部排名（数值越小，排名越高）
@@ -48,19 +50,23 @@ df_schools["rank_city"] = (
 
 # 读取城市坐标（来自 simplemaps.com 免费版）
 df_cities = pd.read_csv("uscities.csv")
-tx_cities = df_cities[df_cities["state_id"] == "TX"][["city", "lat", "lng"]].copy()
+tx_cities = df_cities[df_cities["state_id"]
+                      == "TX"][["city", "lat", "lng"]].copy()
 tx_cities["city"] = tx_cities["city"].str.title()
 
 # 合并坐标到学校数据（用于 Top3 模式）
 df_schools = df_schools.merge(tx_cities, on="city", how="inner")
 
 # 预计算 "All" 模式：城市学校数量
-school_counts = df_schools.groupby("city").size().reset_index(name="school_count")
+school_counts = df_schools.groupby(
+    "city").size().reset_index(name="school_count")
 merged_all = school_counts.merge(tx_cities, on="city", how="inner")
 
 # ----------------------------
 # 2. 颜色函数（用于 All 模式）
 # ----------------------------
+
+
 def get_color_count(value, min_val, max_val):
     if min_val == max_val:
         ratio = 0.5
@@ -73,6 +79,8 @@ def get_color_count(value, min_val, max_val):
 # ----------------------------
 # 3. 图例函数（仅 All 模式）
 # ----------------------------
+
+
 def make_legend(min_val, max_val):
     steps = 5
     if min_val == max_val:
@@ -105,7 +113,8 @@ def make_legend(min_val, max_val):
 
     return html.Div(
         [
-            html.H5("School Count", style={"fontWeight": "bold", "marginBottom": "8px"}),
+            html.H5("School Count", style={
+                    "fontWeight": "bold", "marginBottom": "8px"}),
             html.Div(items),
         ],
         style={
@@ -120,6 +129,7 @@ def make_legend(min_val, max_val):
         },
     )
 
+
 # ----------------------------
 # 4. Dash App
 # ----------------------------
@@ -127,7 +137,8 @@ app = dash.Dash(__name__)
 
 app.layout = html.Div(
     [
-        html.H2("Texas Elementary Schools", style={"textAlign": "center", "margin": "20px", "fontFamily": "Arial"}),
+        html.H2("Texas Elementary Schools", style={
+                "textAlign": "center", "margin": "20px", "fontFamily": "Arial"}),
 
         # Control Panel (View Selector + Map Style Selector)
         html.Div(
@@ -139,7 +150,8 @@ app.layout = html.Div(
                         id="view-selector",
                         options=[
                             {"label": "Overview (Bubble Map)", "value": "all"},
-                            {"label": "Detailed (Top 3 Schools)", "value": "top3"},
+                            {"label": "Detailed (Top 3 Schools)",
+                             "value": "top3"},
                         ],
                         value="all",
                         clearable=False
@@ -148,25 +160,30 @@ app.layout = html.Div(
 
                 # Right: Map Background Style
                 html.Div([
-                    html.Label("Map Background:", style={"fontWeight": "bold"}),
+                    html.Label("Map Background:", style={
+                               "fontWeight": "bold"}),
                     dcc.Dropdown(
                         id="map-style-selector",
-                        options=[{"label": k, "value": k} for k in MAP_STYLES.keys()],
-                        value="Carto Voyager", # Default value
+                        options=[{"label": k, "value": k}
+                                 for k in MAP_STYLES.keys()],
+                        value="Carto Voyager",  # Default value
                         clearable=False
                     )
                 ], style={"width": "300px"})
             ],
-            style={"display": "flex", "justifyContent": "center", "marginBottom": "20px"}
+            style={"display": "flex", "justifyContent": "center",
+                   "marginBottom": "20px"}
         ),
 
         # Map Container
         html.Div(
             [
-                html.Div(id="map-container", style={"height": "100%", "width": "100%"}),
+                html.Div(id="map-container",
+                         style={"height": "100%", "width": "100%"}),
                 html.Div(id="legend-container"),
             ],
-            style={"position": "relative", "height": "700px", "border": "1px solid #ddd"}
+            style={"position": "relative", "height": "700px",
+                   "border": "1px solid #ddd"}
         ),
     ]
 )
@@ -174,6 +191,8 @@ app.layout = html.Div(
 # ----------------------------
 # 5. 回调函数
 # ----------------------------
+
+
 @callback(
     Output("map-container", "children"),
     Output("legend-container", "children"),
@@ -181,7 +200,7 @@ app.layout = html.Div(
     Input("map-style-selector", "value"),
 )
 def update_map(view_mode, map_style_name):
-    # Get the URL based on the dropdown selection 
+    # Get the URL based on the dropdown selection
     tile_url = MAP_STYLES.get(map_style_name, MAP_STYLES["Carto Light"])
     if view_mode == "all":
         if merged_all.empty:
@@ -196,14 +215,14 @@ def update_map(view_mode, map_style_name):
 
         markers = []
 
-        # Radius Size Range Configuration For All Cities 
+        # Radius Size Range Configuration For All Cities
         MIN_RADIUS = 3   # Minimum radius for cities with few schools
         MAX_RADIUS = 35  # Maximum radius for cities like Houston
 
         for _, row in df_all.iterrows():
             count = row['school_count']
-            
-            # Dynamic Radius Size Calculation For All Cities  
+
+            # Dynamic Radius Size Calculation For All Cities
             if max_count == min_count:
                 radius = 10
             else:
@@ -215,15 +234,16 @@ def update_map(view_mode, map_style_name):
             markers.append(
                 dl.CircleMarker(
                     center=[row["lat"], row["lng"]],
-                    # Dynamic Radius Size For All Cities  
+                    # Dynamic Radius Size For All Cities
                     radius=radius,
-                    # Border Color For All Cities 
+                    # Border Color For All Cities
                     color="white",
                     weight=1,
                     fillColor=row["color"],
-                    # fillOpacity For All Cities 
+                    # fillOpacity For All Cities
                     fillOpacity=0.6,
-                    children=dl.Tooltip(f"{row['city']}: {int(row['school_count'])} school(s)"),
+                    children=dl.Tooltip(
+                        f"{row['city']}: {int(row['school_count'])} school(s)"),
                 )
             )
 
@@ -298,8 +318,9 @@ def update_map(view_mode, map_style_name):
     )
     return map_obj, ""
 
+
 # ----------------------------
 # 6. 运行
 # ----------------------------
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run(debug=True)

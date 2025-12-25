@@ -16,13 +16,15 @@ df_schools = df_schools[
 ]
 
 # 提取城市名（移除 ", TX"）
-df_schools["city"] = df_schools["city_state"].str.replace(r",\s*TX$", "", regex=True)
+df_schools["city"] = df_schools["city_state"].str.replace(
+    r",\s*TX$", "", regex=True)
 
 # 移除排名缺失的行（确保排名有效）
 df_schools = df_schools.dropna(subset=["rank_state_elementary"])
 
 # 确保排名列为数值
-df_schools["rank_state_elementary"] = pd.to_numeric(df_schools["rank_state_elementary"], errors="coerce")
+df_schools["rank_state_elementary"] = pd.to_numeric(
+    df_schools["rank_state_elementary"], errors="coerce")
 df_schools = df_schools.dropna(subset=["rank_state_elementary"])
 
 # 计算城市内部排名（数值越小，排名越高）
@@ -33,19 +35,23 @@ df_schools["rank_city"] = (
 
 # 读取城市坐标（来自 simplemaps.com 免费版）
 df_cities = pd.read_csv("uscities.csv")
-tx_cities = df_cities[df_cities["state_id"] == "TX"][["city", "lat", "lng"]].copy()
+tx_cities = df_cities[df_cities["state_id"]
+                      == "TX"][["city", "lat", "lng"]].copy()
 tx_cities["city"] = tx_cities["city"].str.title()
 
 # 合并坐标到学校数据（用于 Top3 模式）
 df_schools = df_schools.merge(tx_cities, on="city", how="inner")
 
 # 预计算 "All" 模式：城市学校数量
-school_counts = df_schools.groupby("city").size().reset_index(name="school_count")
+school_counts = df_schools.groupby(
+    "city").size().reset_index(name="school_count")
 merged_all = school_counts.merge(tx_cities, on="city", how="inner")
 
 # ----------------------------
 # 2. 颜色函数（用于 All 模式）
 # ----------------------------
+
+
 def get_color_count(value, min_val, max_val):
     if min_val == max_val:
         ratio = 0.5
@@ -58,6 +64,8 @@ def get_color_count(value, min_val, max_val):
 # ----------------------------
 # 3. 图例函数（仅 All 模式）
 # ----------------------------
+
+
 def make_legend(min_val, max_val):
     steps = 5
     if min_val == max_val:
@@ -90,7 +98,8 @@ def make_legend(min_val, max_val):
 
     return html.Div(
         [
-            html.H5("School Count", style={"fontWeight": "bold", "marginBottom": "8px"}),
+            html.H5("School Count", style={
+                    "fontWeight": "bold", "marginBottom": "8px"}),
             html.Div(items),
         ],
         style={
@@ -105,6 +114,7 @@ def make_legend(min_val, max_val):
         },
     )
 
+
 # ----------------------------
 # 4. Dash App
 # ----------------------------
@@ -112,7 +122,8 @@ app = dash.Dash(__name__)
 
 app.layout = html.Div(
     [
-        html.H2("Texas Elementary Schools", style={"textAlign": "center", "margin": "20px"}),
+        html.H2("Texas Elementary Schools", style={
+                "textAlign": "center", "margin": "20px"}),
 
         # Dropdown
         html.Div(
@@ -120,7 +131,8 @@ app.layout = html.Div(
                 dcc.Dropdown(
                     id="view-selector",
                     options=[
-                        {"label": "All Cities (by school count)", "value": "all"},
+                        {"label": "All Cities (by school count)",
+                         "value": "all"},
                         {"label": "Top 3 Schools per City", "value": "top3"},
                     ],
                     value="all",
@@ -131,7 +143,8 @@ app.layout = html.Div(
         ),
 
         # 地图容器（position relative，给图例 absolute 定位用）
-        html.Div(id="map-container", style={"position": "relative", "height": "700px"}),
+        html.Div(id="map-container",
+                 style={"position": "relative", "height": "700px"}),
 
         # 图例容器
         html.Div(id="legend-container"),
@@ -141,6 +154,8 @@ app.layout = html.Div(
 # ----------------------------
 # 5. 回调函数
 # ----------------------------
+
+
 @callback(
     Output("map-container", "children"),
     Output("legend-container", "children"),
@@ -168,7 +183,8 @@ def update_map(view_mode):
                     weight=1,
                     fillColor=row["color"],
                     fillOpacity=0.8,
-                    children=dl.Tooltip(f"{row['city']}: {int(row['school_count'])} school(s)"),
+                    children=dl.Tooltip(
+                        f"{row['city']}: {int(row['school_count'])} school(s)"),
                 )
             )
 
@@ -243,8 +259,9 @@ def update_map(view_mode):
     )
     return map_obj, ""
 
+
 # ----------------------------
 # 6. 运行
 # ----------------------------
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run(debug=True)
